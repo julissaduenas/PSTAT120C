@@ -1,0 +1,465 @@
+---
+title: "Data Analytic Report 1"
+author: "Julissa Duenas"
+date: "2/9/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+polls_data_2016=read.csv("president_general_polls_sorted_end_date_2016.csv")
+polls_data_2020=read.csv("president_polls_2020.csv")
+library(lubridate)
+```
+
+
+Question 1:
+
+```{r}
+#Grab data from Michigan, Georgia, and North Carolina
+index_Mich=which(polls_data_2016$state=="Michigan")
+date_Mich <- mdy(polls_data_2016$enddate[index_Mich])
+index_Mich=index_Mich[date_Mich>='2016-08-01']
+date_Mich=date_Mich[date_Mich>='2016-08-01']
+
+index_Georgia=which(polls_data_2016$state=="Georgia")
+date_Georgia <- mdy(polls_data_2016$enddate[index_Georgia])
+index_Georgia=index_Georgia[date_Georgia>='2016-08-01']
+date_Georgia=date_Georgia[date_Georgia>='2016-08-01']
+
+index_NC=which(polls_data_2016$state=="North Carolina")
+date_NC <- mdy(polls_data_2016$enddate[index_NC])
+index_NC=index_NC[date_NC>='2016-08-01']
+date_NC=date_NC[date_NC>='2016-08-01']
+
+```
+
+
+a. 
+```{r}
+Clinton.Mich=sum(polls_data_2016$total.clinton[index_Mich])
+Trump.Mich=sum(polls_data_2016$total.trump[index_Mich])
+paste('Clinton In Michigan:',Clinton.Mich)
+paste('Trump In Michigan:',Trump.Mich)
+
+Clinton.Mich/(Clinton.Mich+Trump.Mich)-Trump.Mich/(Clinton.Mich+Trump.Mich)
+```
+Clinton was ahead in Michigan with a percent difference of 0.0332
+```{r}
+Clinton.Georgia=sum(polls_data_2016$total.clinton[index_Georgia])
+Trump.Georgia=sum(polls_data_2016$total.trump[index_Georgia])
+paste('Clinton In Georgia:',Clinton.Georgia)
+paste('Trump In Georgia:',Trump.Georgia)
+
+Clinton.Georgia/(Clinton.Georgia+Trump.Georgia)-Trump.Georgia/(Clinton.Georgia+Trump.Georgia)
+```
+Trump was ahead in Georgia with a percent difference of 0.0553
+```{r}
+Clinton.NC=sum(polls_data_2016$total.clinton[index_NC])
+Trump.NC=sum(polls_data_2016$total.trump[index_NC])
+paste('Clinton In North Carolina:',Clinton.NC)
+paste('Trump In North Carolina:',Trump.NC)
+
+Clinton.NC/(Clinton.NC+Trump.NC)-Trump.NC/(Clinton.NC+Trump.NC)
+```
+Clinton was ahead in North Carolina with a percent difference of 0.0066
+
+b. 
+```{r}
+counts_Mich <- data.frame(
+  data_date = c(date_Mich,date_Mich),
+  counts=c(polls_data_2016$total.trump[index_Mich],polls_data_2016$total.clinton[index_Mich]),
+  group=c(rep('Trump',length(date_Mich)),rep('Clinton',length(date_Mich)))
+)
+ggplot(data=counts_Mich, aes(x=data_date, y=counts, col=group)) + 
+  geom_point() +
+  scale_color_manual(values=c("blue","red"))+ggtitle('Polls in Michigan')
+```
+```{r}
+counts_Georgia <- data.frame(
+  data_date = c(date_Georgia,date_Georgia),
+  counts=c(polls_data_2016$total.trump[index_Georgia],polls_data_2016$total.clinton[index_Georgia]),
+  group=c(rep('Trump',length(date_Georgia)),rep('Clinton',length(date_Georgia)))
+)
+ggplot(data=counts_Georgia, aes(x=data_date, y=counts, col=group)) + 
+  geom_point() +
+  scale_color_manual(values=c("blue","red"))+ggtitle('Polls in Georgia')
+```
+```{r}
+counts_NC <- data.frame(
+  data_date = c(date_NC,date_NC),
+  counts=c(polls_data_2016$total.trump[index_NC],polls_data_2016$total.clinton[index_NC]),
+  group=c(rep('Trump',length(date_NC)),rep('Clinton',length(date_NC)))
+)
+ggplot(data=counts_NC, aes(x=data_date, y=counts, col=group)) + 
+  geom_point() +
+  scale_color_manual(values=c("blue","red"))+ggtitle('Polls in North Carolina')
+```
+In all 3 plots, you can see that most of the counts took place after Oct 2016. In Georgia, you can see the the votes for Trump were always slightly higher than for Clinton, which makes sense as we saw that he was ahead in the previous question
+
+c. 
+```{r}
+counts_Mich <- data.frame(
+  data_date = date_Mich,
+  percentage_diff = (polls_data_2016$total.clinton[index_Mich]-polls_data_2016$total.trump[index_Mich])/(polls_data_2016$total.clinton[index_Mich]+polls_data_2016$total.trump[index_Mich])
+)
+lm_model_Mich=lm(percentage_diff~(data_date),data=counts_Mich)
+conf_interval_Mich= predict(lm_model_Mich, newdata=counts_Mich, interval="confidence",
+                         level = 0.95)
+plot(counts_Mich$data_date,counts_Mich$percentage_diff,
+     col='black',pch=20,type='p',xlab='date',ylab='difference in counts (%)',main='Michigan')
+polygon(c(rev(counts_Mich$data_date), counts_Mich$data_date), 
+        c(rev(conf_interval_Mich[,2]), conf_interval_Mich[ ,3]), col = 'grey80', border = NA)
+lines(counts_Mich$data_date,counts_Mich$percentage_diff,
+      col='black',pch=20,type='p')
+lines(counts_Mich$data_date,lm_model_Mich$fitted.values,
+      col='black',pch=20,type='l')
+
+
+```
+```{r}
+counts_Georgia <- data.frame(
+  data_date = date_Georgia,
+  percentage_diff = (polls_data_2016$total.clinton[index_Georgia]-polls_data_2016$total.trump[index_Georgia])/(polls_data_2016$total.clinton[index_Georgia]+polls_data_2016$total.trump[index_Georgia])
+)
+lm_model_Georgia=lm(percentage_diff~(data_date),data=counts_Georgia)
+conf_interval_Georgia= predict(lm_model_Georgia, newdata=counts_Georgia, interval="confidence",
+                         level = 0.95)
+plot(counts_Georgia$data_date,counts_Georgia$percentage_diff,
+     col='black',pch=20,type='p',xlab='date',ylab='difference in counts (%)',main='Georgia')
+polygon(c(rev(counts_Georgia$data_date), counts_Georgia$data_date), 
+        c(rev(conf_interval_Georgia[,2]), conf_interval_Georgia[ ,3]), col = 'grey80', border = NA)
+lines(counts_Georgia$data_date,counts_Georgia$percentage_diff,
+      col='black',pch=20,type='p')
+lines(counts_Georgia$data_date,lm_model_Georgia$fitted.values,
+      col='black',pch=20,type='l')
+```
+```{r}
+counts_NC <- data.frame(
+  data_date = date_NC,
+  percentage_diff = (polls_data_2016$total.clinton[index_NC]-polls_data_2016$total.trump[index_NC])/(polls_data_2016$total.clinton[index_NC]+polls_data_2016$total.trump[index_NC])
+)
+lm_model_NC=lm(percentage_diff~(data_date),data=counts_NC)
+conf_interval_NC= predict(lm_model_NC, newdata=counts_NC, interval="confidence",
+                         level = 0.95)
+plot(counts_NC$data_date,counts_NC$percentage_diff,
+     col='black',pch=20,type='p',xlab='date',ylab='difference in counts (%)',main='North Carolina')
+polygon(c(rev(counts_NC$data_date), counts_NC$data_date), 
+        c(rev(conf_interval_NC[,2]), conf_interval_NC[ ,3]), col = 'grey80', border = NA)
+lines(counts_NC$data_date,counts_NC$percentage_diff,
+      col='black',pch=20,type='p')
+lines(counts_NC$data_date,lm_model_NC$fitted.values,
+      col='black',pch=20,type='l')
+```
+
+
+
+Question 2:
+
+```{r}
+date_2020= mdy(polls_data_2020$end_date)
+date_2020_latest_day=date_2020[1]
+index_selected=which(date_2020>='2020-08-01') ##only look at data after Aug 01
+polls_data_2020=polls_data_2020[index_selected,] 
+```
+
+a.
+```{r}
+index.biden.mich=which(polls_data_2020$answer=='Biden'&polls_data_2020$state=='Michigan')
+counts.biden.mich=polls_data_2020$pct[index.biden.mich]*polls_data_2020$sample_size[index.biden.mich]
+
+index.trump.mich=which(polls_data_2020$answer=='Trump'&polls_data_2020$state=='Michigan')
+counts.trump.mich=polls_data_2020$pct[index.trump.mich]*polls_data_2020$sample_size[index.trump.mich]
+
+biden.mich.2020=sum(counts.biden.mich)
+trump.mich.2020=sum(counts.trump.mich)
+
+biden.mich.2020
+trump.mich.2020
+
+(biden.mich.2020-trump.mich.2020)/(biden.mich.2020+trump.mich.2020)
+```
+Biden was leading Michigan with a 0.075 percentage difference
+```{r}
+index.biden.georg=which(polls_data_2020$answer=='Biden'&polls_data_2020$state=='Georgia')
+counts.biden.georg=polls_data_2020$pct[index.biden.georg]*polls_data_2020$sample_size[index.biden.georg]
+
+index.trump.georg=which(polls_data_2020$answer=='Trump'&polls_data_2020$state=='Georgia')
+counts.trump.georg=polls_data_2020$pct[index.trump.georg]*polls_data_2020$sample_size[index.trump.georg]
+
+biden.georg.2020=sum(counts.biden.georg)
+trump.georg.2020=sum(counts.trump.georg)
+
+biden.georg.2020
+trump.georg.2020
+
+(biden.georg.2020-trump.georg.2020)/(biden.georg.2020+trump.georg.2020)
+```
+Biden was very slightly ahead in Georgia with a 0.0096 percentage difference
+```{r}
+index.biden.NC=which(polls_data_2020$answer=='Biden'&polls_data_2020$state=='North Carolina')
+counts.biden.NC=polls_data_2020$pct[index.biden.NC]*polls_data_2020$sample_size[index.biden.NC]
+
+index.trump.NC=which(polls_data_2020$answer=='Trump'&polls_data_2020$state=='North Carolina')
+counts.trump.NC=polls_data_2020$pct[index.trump.NC]*polls_data_2020$sample_size[index.trump.NC]
+
+biden.NC.2020=sum(counts.biden.NC)
+trump.NC.2020=sum(counts.trump.NC)
+
+biden.NC.2020
+trump.NC.2020
+
+(biden.NC.2020-trump.NC.2020)/(biden.NC.2020+trump.NC.2020)
+```
+Biden was ahead in North Carolina with a 0.021 percentage difference
+
+b.
+```{r}
+ylim_value=c(min(counts.biden.mich,counts.trump.mich),
+             max(counts.biden.mich,counts.trump.mich))
+plot(date_2020[index.biden.mich],counts.biden.mich,
+     col='blue',pch=18,cex=1,type='p',xlab='date',ylab='counts',main='Michigan',ylim=ylim_value)
+lines(date_2020[index.trump.mich],counts.trump.mich,col='red',pch=19,cex=.5,type='p')
+legend("topleft",col=c('blue','red'),pch=c(18,19),legend=c('Biden','Trump'))
+
+```
+```{r}
+ylim_value=c(min(counts.biden.georg,counts.trump.georg),
+             max(counts.biden.georg,counts.trump.georg))
+plot(date_2020[index.biden.georg],counts.biden.georg,
+     col='blue',pch=18,cex=1,type='p',xlab='date',ylab='counts',main='Georgia',ylim=ylim_value)
+lines(date_2020[index.trump.georg],counts.trump.georg,col='red',pch=19,cex=.5,type='p')
+legend("topleft",col=c('blue','red'),pch=c(18,19),legend=c('Biden','Trump'))
+```
+```{r}
+ylim_value=c(min(counts.biden.NC,counts.trump.NC),
+             max(counts.biden.NC,counts.trump.NC))
+plot(date_2020[index.biden.NC],counts.biden.NC,
+     col='blue',pch=18,cex=1,type='p',xlab='date',ylab='counts',main='North Carolina',ylim=ylim_value)
+lines(date_2020[index.trump.NC],counts.trump.NC,col='red',pch=19,cex=.5,type='p')
+legend("topleft",col=c('blue','red'),pch=c(18,19),legend=c('Biden','Trump'))
+```
+
+c.
+```{r}
+counts_mich_for_lm_2020 <- data.frame(
+  data_date = date_2020[index.trump.mich],
+  percentage_diff = (counts.biden.mich-counts.trump.mich)/(counts.biden.mich+counts.trump.mich)
+)
+
+lm_model_mich_2020=lm(percentage_diff~(data_date),data=counts_mich_for_lm_2020)
+
+conf_interval_mich_fitted_2020= predict(lm_model_mich_2020, newdata=counts_mich_for_lm_2020, interval="confidence",
+                                       level = 0.95)
+
+plot(counts_mich_for_lm_2020$data_date,counts_mich_for_lm_2020$percentage_diff,
+     col='black',pch=20,type='p',xlab='date',ylab='difference in counts (%)',main='Michigan')
+polygon(c(rev(counts_mich_for_lm_2020$data_date), counts_mich_for_lm_2020$data_date), 
+        c(rev(conf_interval_mich_fitted_2020[,2]), conf_interval_mich_fitted_2020[ ,3]), col = 'grey80', border = NA)
+lines(counts_mich_for_lm_2020$data_date,lm_model_mich_2020$fitted.values,
+      col='black',pch=20,type='l',xlab='date',ylab='difference in counts (%)',main='Michigan')
+lines(counts_mich_for_lm_2020$data_date,counts_mich_for_lm_2020$percentage_diff,
+     col='black',pch=20,type='p',xlab='date',ylab='difference in counts (%)',main='Michigan')
+
+```
+```{r}
+counts_georg_for_lm_2020 <- data.frame(
+  data_date = date_2020[index.trump.georg],
+  percentage_diff = (counts.biden.georg-counts.trump.georg)/(counts.biden.georg+counts.trump.georg)
+)
+
+lm_model_georg_2020=lm(percentage_diff~(data_date),data=counts_georg_for_lm_2020)
+
+conf_interval_georg_fitted_2020= predict(lm_model_georg_2020, newdata=counts_georg_for_lm_2020, interval="confidence",
+                                       level = 0.95)
+
+plot(counts_georg_for_lm_2020$data_date,counts_georg_for_lm_2020$percentage_diff,
+     col='black',pch=20,type='p',xlab='date',ylab='difference in counts (%)',main='Georgia')
+polygon(c(rev(counts_georg_for_lm_2020$data_date), counts_georg_for_lm_2020$data_date), 
+        c(rev(conf_interval_georg_fitted_2020[,2]), conf_interval_georg_fitted_2020[ ,3]), col = 'grey80', border = NA)
+lines(counts_georg_for_lm_2020$data_date,lm_model_georg_2020$fitted.values,
+      col='black',pch=20,type='l',xlab='date',ylab='difference in counts (%)',main='Georgia')
+lines(counts_georg_for_lm_2020$data_date,counts_georg_for_lm_2020$percentage_diff,
+     col='black',pch=20,type='p',xlab='date',ylab='difference in counts (%)',main='Georgia')
+```
+```{r}
+counts_NC_for_lm_2020 <- data.frame(
+  data_date = date_2020[index.trump.NC],
+  percentage_diff = (counts.biden.NC-counts.trump.NC)/(counts.biden.NC+counts.trump.NC)
+)
+
+lm_model_NC_2020=lm(percentage_diff~(data_date),data=counts_NC_for_lm_2020)
+
+conf_interval_NC_fitted_2020= predict(lm_model_NC_2020, newdata=counts_NC_for_lm_2020, interval="confidence",
+                                       level = 0.95)
+
+plot(counts_NC_for_lm_2020$data_date,counts_NC_for_lm_2020$percentage_diff,
+     col='black',pch=20,type='p',xlab='date',ylab='difference in counts (%)',main='North Carolina')
+polygon(c(rev(counts_NC_for_lm_2020$data_date), counts_NC_for_lm_2020$data_date), 
+        c(rev(conf_interval_NC_fitted_2020[,2]), conf_interval_NC_fitted_2020[ ,3]), col = 'grey80', border = NA)
+lines(counts_NC_for_lm_2020$data_date,lm_model_NC_2020$fitted.values,
+      col='black',pch=20,type='l',xlab='date',ylab='difference in counts (%)',main='North Carolina')
+lines(counts_NC_for_lm_2020$data_date,counts_NC_for_lm_2020$percentage_diff,
+     col='black',pch=20,type='p',xlab='date',ylab='difference in counts (%)',main='North Carolina')
+```
+
+
+Question 4:
+
+a. 
+```{r}
+library(usmap)
+library(ggplot2)
+
+##create a data frame
+state_poll_2016 <- data.frame(
+  state =poll_state_diff_percentage[,1],
+  diff_percentage=poll_state_diff_percentage[,2]
+)
+##let's look at 2020
+index_selected=which(date_2020>='2020-08-01') 
+polls_data_2020_after_sep=polls_data_2020[index_selected,]  ###only work on the poll after Aug 1
+polls_data_2020_after_sep=polls_data_2020_after_sep[which(polls_data_2020$answer=='Biden'|polls_data_2020$answer=='Trump'),]
+index_biden_2020=which(polls_data_2020_after_sep$answer=='Biden')
+index_trump_2020=which(polls_data_2020_after_sep$answer=='Trump' )
+counts_biden_2020=polls_data_2020$pct[index_biden_2020]*polls_data_2020$sample_size[index_biden_2020]
+counts_trump_2020=polls_data_2020$pct[index_trump_2020]*polls_data_2020$sample_size[index_trump_2020]
+
+##add two column
+polls_data_2020$total.biden=rep(0,dim(polls_data_2020)[1])
+polls_data_2020$total.trump=rep(0,dim(polls_data_2020)[1])
+
+polls_data_2020$total.biden[index_biden_2020]=counts_biden_2020
+polls_data_2020$total.trump[index_trump_2020]=counts_trump_2020
+
+poll_state_sum_biden_2020=aggregate(polls_data_2020$total.biden, by=list(State=polls_data_2020$state),FUN=sum)
+poll_state_sum_trump_2020=aggregate(polls_data_2020$total.trump, by=list(State=polls_data_2020$state),FUN=sum)
+
+#delete the one with NA
+poll_state_sum_biden_2020=poll_state_sum_biden_2020[-1,]
+poll_state_sum_trump_2020=poll_state_sum_trump_2020[-1,]
+
+##create a data frame
+state_poll_2020 <- data.frame(
+  state =poll_state_sum_biden_2020[,1],
+  diff_percentage=(poll_state_sum_biden_2020[,2]-poll_state_sum_trump_2020[,2])/(poll_state_sum_biden_2020[,2]+poll_state_sum_trump_2020[,2])
+)
+
+
+
+limit_val=c(min(state_poll_2016$diff_percentage,state_poll_2020$diff_percentage),
+            max(state_poll_2016$diff_percentage,state_poll_2020$diff_percentage))
+##2016
+plot_usmap(data = state_poll_2016, values = "diff_percentage", color = "black") +
+  scale_fill_gradient2(name = "difference (%)",   low= "red",
+                       mid = "white",
+                       high = "blue",
+                       midpoint = 0,limits=limit_val)+
+  theme(legend.position = "right")+
+ggtitle("2016") 
+##2020
+##it does not have poll from Nebraska. It does not plot the poll from congressional district
+plot_usmap(data = state_poll_2020, values = "diff_percentage", color = "black") +
+  scale_fill_gradient2(name = "difference (%)",   low= "red",
+                       mid = "white",
+                       high = "blue",
+                       midpoint = 0,limits=limit_val)+
+  theme(legend.position = "right")+
+ggtitle("2020") 
+
+##difference between 2020 and 2016
+##delete nebrask CD-1 and CD-3, as 2020 does not have it 
+state_poll_2016=state_poll_2016[-c(31,33),]
+
+
+state_poll_2020_2016_diff <- data.frame(
+  state =state_poll_2020$state,
+  diff=state_poll_2020$diff_percentage-state_poll_2016$diff_percentage
+)
+
+plot_usmap(data = state_poll_2020_2016_diff, values = "diff", color = "black") +
+  scale_fill_gradient2(name = "difference between 2016 and 2020 (%)",   low= "red",
+                       mid = "white",
+                       high = "blue",
+                       midpoint = 0)+
+  theme(legend.position = "right")+
+  ggtitle("difference between 2020 and 2016") 
+```
+
+
+
+
+Question 5:
+```{r}
+state_poll_2016 <- data.frame(
+  state =poll_state_diff_percentage[,1],
+  diff_percentage=poll_state_diff_percentage[,2]
+)
+
+state_poll_2020 <- data.frame(
+  state =poll_state_sum_biden_2020[,1],
+  diff_percentage=(poll_state_sum_biden_2020[,2]-poll_state_sum_trump_2020[,2])/(poll_state_sum_biden_2020[,2]+poll_state_sum_trump_2020[,2])
+)
+```
+
+Question 6:
+```{r}
+index_flor=which(polls_data_2016$state=="Florida")
+date_flor <- mdy(polls_data_2016$enddate[index_flor])
+index_flor=index_flor[date_flor>='2016-08-01']
+date_flor=date_flor[date_flor>='2016-08-01']
+
+counts_flor <- data.frame(
+  data_date = c(date_flor,date_flor),
+  counts=c(polls_data_2016$total.trump[index_flor],polls_data_2016$total.clinton[index_flor]),
+  group=c(rep('Trump',length(date_flor)),rep('Clinton',length(date_flor)))
+)
+ggplot(data=counts_flor, aes(x=data_date, y=counts, col=group)) + 
+  geom_point() +
+  scale_color_manual(values=c("blue","red"))+ggtitle('Polls in Florida 2016')
+
+index_iowa=which(polls_data_2016$state=="Iowa")
+date_iowa <- mdy(polls_data_2016$enddate[index_iowa])
+index_iowa=index_iowa[date_iowa>='2016-08-01']
+date_iowa=date_iowa[date_iowa>='2016-08-01']
+
+counts_iowa <- data.frame(
+  data_date = c(date_iowa,date_iowa),
+  counts=c(polls_data_2016$total.trump[index_iowa],polls_data_2016$total.clinton[index_iowa]),
+  group=c(rep('Trump',length(date_iowa)),rep('Clinton',length(date_iowa)))
+)
+ggplot(data=counts_iowa, aes(x=data_date, y=counts, col=group)) + 
+  geom_point() +
+  scale_color_manual(values=c("blue","red"))+ggtitle('Polls in Iowa 2016')
+
+
+index.biden.flor=which(polls_data_2020$answer=='Biden'&polls_data_2020$state=='Florida')
+counts.biden.flor=polls_data_2020$pct[index.biden.flor]*polls_data_2020$sample_size[index.biden.flor]
+
+index.trump.flor=which(polls_data_2020$answer=='Trump'&polls_data_2020$state=='Florida')
+counts.trump.flor=polls_data_2020$pct[index.trump.flor]*polls_data_2020$sample_size[index.trump.flor]
+ylim_value=c(min(counts.biden.flor,counts.trump.flor),
+             max(counts.biden.flor,counts.trump.flor))
+plot(date_2020[index.biden.flor],counts.biden.flor,
+     col='blue',pch=18,cex=1,type='p',xlab='date',ylab='counts',main='Florida 2020',ylim=ylim_value)
+lines(date_2020[index.trump.flor],counts.trump.flor,col='red',pch=19,cex=.5,type='p')
+legend("topleft",col=c('blue','red'),pch=c(18,19),legend=c('Biden','Trump'))
+
+index.biden.iowa=which(polls_data_2020$answer=='Biden'&polls_data_2020$state=='Iowa')
+counts.biden.iowa=polls_data_2020$pct[index.biden.iowa]*polls_data_2020$sample_size[index.biden.iowa]
+
+index.trump.iowa=which(polls_data_2020$answer=='Trump'&polls_data_2020$state=='Iowa')
+counts.trump.iowa=polls_data_2020$pct[index.trump.iowa]*polls_data_2020$sample_size[index.trump.iowa]
+ylim_value=c(min(counts.biden.iowa,counts.trump.iowa),
+             max(counts.biden.iowa,counts.trump.iowa))
+plot(date_2020[index.biden.iowa],counts.biden.iowa,
+     col='blue',pch=18,cex=1,type='p',xlab='date',ylab='counts',main='Iowa 2020',ylim=ylim_value)
+lines(date_2020[index.trump.iowa],counts.trump.iowa,col='red',pch=19,cex=.5,type='p')
+legend("topleft",col=c('blue','red'),pch=c(18,19),legend=c('Biden','Trump'))
+
+
+```
+
